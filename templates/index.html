@@ -5,9 +5,11 @@
     <h1> Последние обновления на сайте</h1>
     {% for post in page %}
         <h3>
-            Автор: {{ post.author.get_full_name }}, Дата публикации: {{ post.pub_date|date:"d M Y" }}
+            Автор: <a href="{% url 'profile' post.author %}">{{ post.author.get_full_name }}</a>, Дата
+            публикации: {{ post.pub_date|date:"d M Y" }}
         </h3>
-        <p>{{ post.text|linebreaksbr }}</p>
+        <p>{{ post.text|truncatewords:50 | linebreaksbr }}<a href="{% url 'post' post.author post.id %}">Подробнее</a>
+        </p>
         {% if not forloop.last %}
             <hr>{% endif %}
     {% endfor %}
