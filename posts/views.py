@@ -2,7 +2,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404, redirect
 
-from .models import Post, Group, PostForm, User
+from .forms import PostForm
+from .models import Post, Group, User
 
 
 def index(request):
@@ -49,13 +50,17 @@ def post_view(request, username, post_id):
     return render(request, 'post.html', {'user': user, 'post': post})
 
 
+@login_required
 def post_edit(request, username, post_id):
     user = get_object_or_404(User, username=username)
-    post = get_object_or_404(Post, author=user, pk=post_id)
-    form = PostForm(request.POST or None, instance=post)
-    if not form.is_valid():
-        return render(request, "new_post.html", {'form': form})
-    post = form.save(commit=False)
-    post.author = request.user
-    post.save()
-    return render(request, 'new_post.html', {})
+    post = get_object_or_404(Post, pk=post_id, author=user)
+    if request.user != user:
+        return redirect('post', username=username, post_id=post_id)
+    form = PostForm(request.POST or None, files=request.FILES or None, instance=post)
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            return redirect("post", username=request.user.username, post_id=post_id)
+    return render(
+        request, 'new_post.html', {'form': form, 'post': post},
+    )

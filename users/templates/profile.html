@@ -2,6 +2,7 @@
 {% block title %}Новая запись{% endblock %}
 {% block content %}
     {% load user_filters %}
+    {% load thumbnail %}
     <main role="main" class="container">
         <div class="row">
             <div class="col-md-3 mb-3 mt-1">
@@ -43,11 +44,13 @@
                             </p>
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="btn-group ">
-                                    <a class="btn btn-sm text-muted" href="/{{ user }}/{{ post.id }}/" role="button">Добавить
+                                    <a class="btn btn-sm text-muted" href="{% url 'post' post.author post.id %}/"
+                                       role="button">Добавить
                                         комментарий</a>
                                     <!-- Ссылка на редактирование, показывается только автору записи -->
                                     {% if user == request.user %}
-                                        <a class="btn btn-sm text-muted" href="/{{ user }}/{{ post.id }}/edit"
+                                        <a class="btn btn-sm text-muted"
+                                           href="{% url 'post_edit' post.author post.id %}"
                                            role="button">Редактировать</a>
                                     {% endif %}
                                 </div>
