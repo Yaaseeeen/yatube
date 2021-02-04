@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% load bootstrap_pagination %}
 {% block title %} Последние обновления {% endblock %}
 {% block content %}
 
     <h1> Последние обновления на сайте</h1>
-    {% for post in page %}
+    {% for post in posts %}
         <h3>
             Автор: <a href="{% url 'profile' post.author %}">{{ post.author.get_full_name }}</a>, Дата
             публикации: {{ post.pub_date|date:"d M Y" }}
@@ -18,4 +19,22 @@
         {% include "paginator.html" with items=page paginator=paginator %}
     {% endif %}
     ****
+
+
+
+
+
+
+
+
+
+
+
+
+       <div class="row">
+        <div class="col-md-12">
+            {% bootstrap_paginate page_obj range=7 %}
+        </div>
+    </div>
+
 {% endblock %}

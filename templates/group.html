@@ -2,6 +2,7 @@
 {% block title %}Записи сообщества{{ group }}{% endblock %}
 {% block header %}{{ group }}{% endblock %}
 {% block content %}
+    {% load thumbnail %}
     <p>{{ group.description }}</p>
     {% for post in posts %}
         <h3>

@@ -24,7 +24,12 @@ SECRET_KEY = 'fw6fy@^()ie7g8$h=&itd^g1y&zknh$jmdvc8n+ontitdzrss('
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "[::1]",
+    "testserver",
+]
 
 # Application definition
 
@@ -40,6 +45,8 @@ INSTALLED_APPS = [
     'django_extensions',
     'django.contrib.sites',
     'django.contrib.flatpages',
+    'bootstrap_pagination',
+    'sorl.thumbnail',
 ]
 
 MIDDLEWARE = [
@@ -137,3 +144,6 @@ EMAIL_FILE_PATH = os.path.join(BASE_DIR, "sent_emails")
 
 # Идентификатор текущего сайта
 SITE_ID = 1
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

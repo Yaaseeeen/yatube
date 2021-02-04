@@ -1,7 +1,7 @@
 from django.test import Client, TestCase
 
 # from unittest import TestCase
-from posts.models import Group
+from posts.models import Group, User, Post
 
 
 class TestClientMixin:
@@ -37,3 +37,17 @@ class TestGroups(TestClientMixin, TestCase):
         Group.objects.create(title='test', slug='test-group', description='empty')
         response = self.client.get('/group/test-group/')
         self.assertEqual(response.status_code, 200)
+
+
+# -----------------------------------
+class ProfileTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(password='str', username='TestUser')
+        self.post = Post.objects.create(text='blf-bla=blah', author=self.user)
+
+    def test_new_post(self):
+        self.client.login(password='str', username='TestUser')
+        self.client.post('/new', {
+            'text': 'blf-bla=blah'
+        })
