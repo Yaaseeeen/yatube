@@ -1,12 +1,12 @@
-from django.forms import ModelForm, forms
+from django import forms
 
 from posts.models import Post
 
 
-class PostForm(ModelForm):
+class PostForm(forms.ModelForm):
     class Meta:
         model = Post
-        fields = ['group', 'text', 'image']
+        fields = ('group', 'text', 'image')
 
     def validate_form(self):
         data = self.cleaned_data['text']

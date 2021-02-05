@@ -4,37 +4,11 @@
 {% block content %}
 
     <h1> Последние обновления на сайте</h1>
+
     {% for post in posts %}
-        <h3>
-            Автор: <a href="{% url 'profile' post.author %}">{{ post.author.get_full_name }}</a>, Дата
-            публикации: {{ post.pub_date|date:"d M Y" }}
-        </h3>
-        <p>{{ post.text|truncatewords:50 | linebreaksbr }}<a href="{% url 'post' post.author post.id %}">Подробнее</a>
-        </p>
-        {% if not forloop.last %}
-            <hr>{% endif %}
+        {% include 'content.html' %}
     {% endfor %}
 
-    {% if page.has_other_pages %}
-        {% include "paginator.html" with items=page paginator=paginator %}
-    {% endif %}
-    ****
-
-
-
-
-
-
-
-
-
-
-
-
-       <div class="row">
-        <div class="col-md-12">
-            {% bootstrap_paginate page_obj range=7 %}
-        </div>
-    </div>
+    {% include 'paginate.html' %}
 
 {% endblock %}
