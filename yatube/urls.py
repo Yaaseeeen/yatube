@@ -5,8 +5,6 @@ from django.contrib.flatpages import views
 from django.urls import include, path
 
 urlpatterns = [
-    #  обработчик для главной страницы ищем в urls.py приложения posts
-    path("", include("posts.urls")),
 
     #  регистрация и авторизация
     path("auth/", include("users.urls")),
@@ -26,6 +24,7 @@ urlpatterns += [
     path('about-author/', views.flatpage, {'url': '/about-author/'}, name='about'),
     path('about-spec/', views.flatpage, {'url': '/about-spec/'}, name='about-spec'),
     path('terms/', views.flatpage, {'url': '/terms/'}, name='terms'),
+    path("", include("posts.urls")),
 ]
 
 if settings.DEBUG:
