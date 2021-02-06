@@ -8,7 +8,7 @@
             <p class="card-text">
                 <a href="{% url 'profile' post.author %}"><strong
                         class="d-block text-gray-dark">@{{ post.author }}</strong></a>
-                {{ post.text|truncatewords:50 }}
+                {{ post.text|truncatewords:50 | safe }}
             </p>
             <div class="d-flex justify-content-between align-items-center">
                 <div class="btn-group ">
@@ -19,6 +19,8 @@
                         {% if user == post.author %}
                             <a class="btn btn-sm text-muted" href="{% url 'post_edit' post.author post.pk %}"
                                role="button">Редактировать</a>
+                            <a class="btn btn-sm text-muted" href="{% url 'post_delete' post.author post.pk %}"
+                               role="button">Удалить</a>
                         {% endif %}
                 </div>
                 <small class="text-muted">{{ post.pub_date|date:"d M Y" }}</small>

@@ -1,10 +1,11 @@
+from django.contrib import messages
 from django.core.paginator import Paginator
-from django.shortcuts import render, get_object_or_404
-from django.urls import reverse
-from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse, reverse_lazy
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.views.generic.base import View
 
-from .forms import PostForm
+from .forms import PostForm, CommentForm
 from .models import Post, Group, User
 
 
@@ -83,10 +84,24 @@ class PostEditView(UpdateView):
         return reverse('post', kwargs={'username': self.object, 'pk': self.object.pk})
 
 
+class PostDeleteView(DeleteView):
+    model = Post
+    template_name = 'post_delete.html'
+    success_url = reverse_lazy('index')
+
+    def get_context_data(self, **kwargs):
+        print('self.object')
+        print(self.object)
+        messages.add_message(
+            self.request, messages.INFO, f'Новость {self.object} удалена', extra_tags='info'
+        )
+        return super().get_context_data(**kwargs)
+
+
 # todo
-def add_comment(request):
-    if request.method == 'POST':
-        return render(request, "post.html")
+# def add_comment(request):
+#     if request.method == 'POST':
+#         return render(request, "post.html")
 
 
 class AddCommentView(View):
@@ -97,3 +112,30 @@ class AddCommentView(View):
     def post(self, request):
         # добавляем комментарий
         pass
+
+
+def add_comment(request, pk):
+    print('request')
+    print(request)
+
+    """Добавление комментария к посту"""
+    if request.method == 'POST':
+        post = get_object_or_404(Post, pk=pk)
+        form = CommentForm(data=request.POST)
+        print('form1')
+        print(form)
+        if form.is_valid():
+            print('form')
+            print(form)
+            comment = form.save(commit=False)
+            comment.author = request.user
+            comment.post = post
+            comment.save()
+        else:
+            return render(request, 'post.html', {
+                'posts': post,
+                'comments': post.comments.all(),
+                'comments_form': form
+            })
+
+    return redirect(reverse('post', kwargs={'pk': pk}))

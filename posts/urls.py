@@ -15,4 +15,6 @@ urlpatterns = (
     # Просмотр записи
     path('<str:username>/<int:pk>/', PostDetailView.as_view(), name='post'),
     path('<str:username>/<int:pk>/edit/', views.PostEditView.as_view(), name='post_edit'),
+    path('<str:username>/<int:pk>/delete/', views.PostDeleteView.as_view(), name='post_delete'),
+    path('<str:username>/<int:pk>/comment', views.add_comment, name='add_comment'),
 )
