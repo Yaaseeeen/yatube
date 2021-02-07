@@ -1,13 +1,21 @@
 from django import forms
-from django.forms import Textarea
+from django.forms import ModelForm
 
 from posts.models import Post, Comment
 
 
-class PostForm(forms.ModelForm):
+class PostForm(ModelForm):
     class Meta:
         model = Post
         fields = ('group', 'text', 'image')
+        labels = {
+            'text': 'Текст поста',
+            'group': 'Группа',
+            'image': 'Изображение',
+        }
+        error_messages = {'image': {'invalid': 'invalid type'}}
+        help_texts = {'text': 'Добавьте текст(обязательно)', 'group': 'Выберите группу(опционально)',
+                      'image': 'Выберите картинку(опционально)', }
 
     def validate_form(self):
         data = self.cleaned_data['text']
@@ -15,12 +23,11 @@ class PostForm(forms.ModelForm):
             raise forms.ValidationError('Пост не может быть пустым')
 
 
-class CommentForm(forms.ModelForm):
+class CommentForm(ModelForm):
     class Meta:
         model = Comment
-        fields = ['text']
-
-        widgets = {
-            'text': Textarea(attrs={"class": "form-control"})
+        fields = ('text',)
+        labels = {
+            'text': 'Текст комментария',
         }
-# message = forms.CharField(widget=forms.Textarea(attrs={"class":"form-control"}))
+        help_texts = {'text': 'Добавьте комментарий'}
