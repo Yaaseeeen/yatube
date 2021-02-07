@@ -1,20 +1,27 @@
 from django.urls import path
 
 from . import views
-from .views import PostDetailView
 
-handler404 = "posts.views.page_not_found"  # noqa
-handler500 = "posts.views.server_error"  # noqa
-urlpatterns = (
-    path("", views.PostView.as_view(), name="index"),
-    path("new/", views.PostCreateView.as_view(), name="new_post"),
-    # todo
-    # path("group/<slug:slug>/", views.group_posts, name="groups"),
-    # Профайл пользователя
+
+urlpatterns = [
+    path('group/<slug:slug>', views.group_post, name='group'),
+    path('new/', views.new_post, name='new_post'),
+    path("follow/", views.follow_index, name="follow_index"),
+    path('', views.index, name='index'),
+
     path('<str:username>/', views.profile, name='profile'),
-    # Просмотр записи
-    path('<str:username>/<int:pk>/', PostDetailView.as_view(), name='post'),
-    path('<str:username>/<int:pk>/edit/', views.PostEditView.as_view(), name='post_edit'),
-    path('<str:username>/<int:pk>/delete/', views.PostDeleteView.as_view(), name='post_delete'),
-    path('<str:username>/<int:pk>/comment', views.add_comment, name='add_comment'),
-)
+    path('<str:username>/<int:post_id>/', views.post_view, name='post'),
+    path('<str:username>/<int:post_id>/edit/',
+         views.post_edit,
+         name='post_edit'),
+    path('<str:username>/<int:post_id>/comment',
+         views.add_comment,
+         name='add_comment'),
+
+    path("<str:username>/follow/",
+         views.profile_follow,
+         name="profile_follow"),
+    path("<str:username>/unfollow/",
+         views.profile_unfollow,
+         name="profile_unfollow"),
+]

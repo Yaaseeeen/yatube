@@ -1,13 +1,13 @@
 {% extends "base.html" %} 
-{% block title %}Последние обновления{% endblock %}
-{% block header %}Последние обновления на сайте{% endblock %}
+{% block title %}Ваша лента{% endblock %}
+{% block header %}Ваша лента{% endblock %}
 {% block content %}
     
     <div class="col-md-9">
         {% load thumbnail %}
         {% load cache %}
 
-        {% cache 20 index_page %}
+        {% cache 20 follow_page %}
         {% for post in page %}
             <div class="card mb-3 mt-1 shadow-sm">
                 <div class="card-body">
@@ -21,7 +21,7 @@
                 
                 <div class="card-body">
                     <p class="card-text">
-                        {{ post.text|safe }}
+                        {{ post.text|linebreaksbr }}
                     </p>
                 </div>
             </div>

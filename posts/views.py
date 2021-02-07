@@ -1,38 +1,164 @@
-from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse, reverse_lazy
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.views.generic.base import View
 
 from .forms import PostForm, CommentForm
-from .models import Post, Group, User
+from .models import User, Post, Group, Follow
 
 
-class PostView(ListView):
-    model = Post
-    paginate_by = 10
-    template_name = 'index.html'
-    context_object_name = 'posts'
+def index(request):
+    post_list = Post.objects.select_related('group').all()
+    paginator = Paginator(post_list, 10)
+    page_number = request.GET.get('page')
+    page = paginator.get_page(page_number)
+
+    return render(
+        request,
+        'index.html',
+        {'page': page, 'paginator': paginator}
+    )
 
 
-class PostCreateView(CreateView):
-    form_class = PostForm
-    template_name = 'new_post.html'
+@login_required
+def follow_index(request):
+    post_list = Post.objects.filter(author__following__user=request.user)
 
-    def form_valid(self, form):
-        post = form.save(commit=False)
-        post.author = self.request.user
-        post.save()
-        return super().form_valid(form)
+    paginator = Paginator(post_list, 10)
+    page_number = request.GET.get('page')
+    page = paginator.get_page(page_number)
 
-    def get_success_url(self):
-        return reverse('index')
+    return render(
+        request,
+        'follow.html',
+        {'page': page, 'paginator': paginator}
+    )
+
+
+@login_required
+def profile_follow(request, username):
+    author = get_object_or_404(User, username=username)
+    user = request.user
+    if user != author:
+        Follow.objects.get_or_create(user=user, author=author)
+    return redirect('follow_index')
+
+
+@login_required
+def profile_unfollow(request, username):
+    author = get_object_or_404(User, username=username)
+    user = request.user
+    relation = Follow.objects.filter(user=user, author=author)
+    if relation.exists():
+        relation.delete()
+    return redirect('follow_index')
+
+
+def group_post(request, slug):
+    group = get_object_or_404(Group, slug=slug)
+    group_post_list = group.posts.all()
+    paginator = Paginator(group_post_list, 5)
+    page_number = request.GET.get('page')
+    page = paginator.get_page(page_number)
+
+    return render(
+        request,
+        'group.html',
+        {'page': page, 'paginator': paginator, 'group': group}
+    )
+
+
+def profile(request, username):
+    author = get_object_or_404(User, username=username)
+    user = request.user
+    user_posts = author.posts.all()
+    paginator = Paginator(user_posts, 5)
+    page_number = request.GET.get('page')
+    page = paginator.get_page(page_number)
+    following = not request.user.is_anonymous and Follow.objects.filter(
+        user=user,
+        author=author
+    ).exists()
+
+    return render(
+        request,
+        'profile.html',
+        {
+            'page': page,
+            'paginator': paginator,
+            'author': author,
+            'following': following,
+        }
+    )
+
+
+def post_view(request, username, post_id):
+    post = get_object_or_404(Post, pk=post_id)
+    user = request.user
+    form = CommentForm(request.POST or None)
+    following = not request.user.is_anonymous and Follow.objects.filter(
+        user=user,
+        author=post.author
+    ).exists()
+
+    return render(request, 'post.html',
+                  {
+                      'author': post.author,
+                      'post': post,
+                      'form': form,
+                      'items': post.comments.all(),
+                      'following': following,
+                  }
+                  )
+
+
+@login_required
+def add_comment(request, username, post_id):
+    post = get_object_or_404(Post, id=post_id, )
+    form = CommentForm(request.POST or None)
+    if form.is_valid():
+        form.instance.author = request.user
+        form.instance.post_id = post_id
+        form.save()
+    return redirect('post', username=username, post_id=post_id)
+
+
+@login_required
+def new_post(request):
+    if request.method != 'POST':
+        form = PostForm()
+        return render(request, 'new.html', {'form': form})
+
+    form = PostForm(request.POST or None, files=request.FILES or None)
+    if form.is_valid():
+        new = form.save(commit=False)
+        new.author = request.user
+        new.save()
+        return redirect('index')
+    return render(request, 'new.html', {'form': form, 'is_edit': False})
+
+
+@login_required
+def post_edit(request, username, post_id):
+    post = get_object_or_404(Post, pk=post_id, author__username=username)
+    if post.author != request.user:
+        return redirect('post', username=username, post_id=post_id)
+    form = PostForm(
+        request.POST or None,
+        files=request.FILES or None,
+        instance=post
+    )
+    if form.is_valid():
+        form.save()
+        return redirect('post', username=username, post_id=post_id)
+
+    return render(
+        request,
+        'new.html',
+        {'form': form, 'post': post, 'is_edit': True}
+    )
 
 
 def page_not_found(request, exception):
-    # Переменная exception содержит отладочную информацию,
-    # выводить её в шаблон пользователской страницы 404 мы не станем
     return render(
         request,
         "misc/404.html",
@@ -43,99 +169,3 @@ def page_not_found(request, exception):
 
 def server_error(request):
     return render(request, "misc/500.html", status=500)
-
-
-def group_posts(request, slug):
-    group = get_object_or_404(Group, slug=slug)
-    posts = Post.objects.filter(group=group).order_by("-pub_date")[:12]
-    return render(request, "group.html", {"posts": posts, 'group': group})
-
-
-def profile(request, username):
-    user = get_object_or_404(User, username=username)
-    post_list = Post.objects.filter(author=user).order_by("-pub_date").all()
-    paginator = Paginator(post_list, 10)
-    page_number = request.GET.get('page')
-    page = paginator.get_page(page_number)
-    return render(request, 'profile.html', {'user': user, 'page': page, 'paginator': paginator})
-
-
-class PostDetailView(DetailView):
-    model = Post
-    context_object_name = 'post'
-    template_name = 'post.html'
-
-    def get(self, request, *args, **kwargs):
-        data = super().get(request, *args, **kwargs)
-        return data
-
-    def get_context_data(self, **kwargs):
-        data = super().get_context_data(**kwargs)
-        return data
-
-
-class PostEditView(UpdateView):
-    model = Post
-    form_class = PostForm
-    template_name = 'new_post.html'
-
-    @property
-    def success_url(self):
-        return reverse('post', kwargs={'username': self.object, 'pk': self.object.pk})
-
-
-class PostDeleteView(DeleteView):
-    model = Post
-    template_name = 'post_delete.html'
-    success_url = reverse_lazy('index')
-
-    def get_context_data(self, **kwargs):
-        print('self.object')
-        print(self.object)
-        messages.add_message(
-            self.request, messages.INFO, f'Новость {self.object} удалена', extra_tags='info'
-        )
-        return super().get_context_data(**kwargs)
-
-
-# todo
-# def add_comment(request):
-#     if request.method == 'POST':
-#         return render(request, "post.html")
-
-
-class AddCommentView(View):
-    def get(self, request):
-        # редирект на страницу поста
-        pass
-
-    def post(self, request):
-        # добавляем комментарий
-        pass
-
-
-def add_comment(request, pk):
-    print('request')
-    print(request)
-
-    """Добавление комментария к посту"""
-    if request.method == 'POST':
-        post = get_object_or_404(Post, pk=pk)
-        form = CommentForm(data=request.POST)
-        print('form1')
-        print(form)
-        if form.is_valid():
-            print('form')
-            print(form)
-            comment = form.save(commit=False)
-            comment.author = request.user
-            comment.post = post
-            comment.save()
-        else:
-            return render(request, 'post.html', {
-                'posts': post,
-                'comments': post.comments.all(),
-                'comments_form': form
-            })
-
-    return redirect(reverse('post', kwargs={'pk': pk}))
